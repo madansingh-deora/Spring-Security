@@ -20,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -28,18 +29,22 @@ public class SecurityConfig {
     @Autowired
     private MyUserDetailsService userDetailsService;
 
+    @Autowired
+    private JWTFilter jwtFilter;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.csrf(customizer ->customizer.disable());
-        httpSecurity.authorizeHttpRequests(request->request
+        return httpSecurity.csrf(customizer ->customizer.disable())
+        .authorizeHttpRequests(request->request
                 .requestMatchers("register","login")
                 .permitAll()
-                .anyRequest().authenticated());
-        //httpSecurity.formLogin(Customizer.withDefaults()); //for browers
-        httpSecurity.httpBasic(Customizer.withDefaults()); //for postman
+                .anyRequest().authenticated())
+                //.formLogin(Customizer.withDefaults()); //for browers
+                .httpBasic(Customizer.withDefaults())
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class) //for postman
         //httpSecurity.sessionManagement(session->
                 //session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); //this will create a new session on every hit so broswer with form login will not work, will have to remove browser formlogin
-        return httpSecurity.build();
+        .build();
     }
 
    /* @Bean
